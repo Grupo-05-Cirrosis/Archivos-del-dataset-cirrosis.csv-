@@ -1,0 +1,128 @@
+---
+title: "PC2 – 2"
+author: "Rojas Cortez Nayely Luz"
+format: html
+editor: visual
+---
+
+#### Grupo 05
+
+-   Rojas Cortez Nayely
+
+-   Ticse Pecho Katherine
+
+-   Manay Ventura Alexander
+
+-   Pachas Rojas Lizbeth
+
+-   Lozano Laura,Marina
+
+-   Caballero Martinez Arianna
+
+# Cargamos los paquetes necesarios
+
+```{r}
+#library(rio)
+library(here)
+```
+
+# INTRODUCCION
+
+Para este informe se aplican pruebas estadísticas para analizar un conjunto de datos biomédicos con el fin de evaluar supuestos de normalidad y relaciones entre variables categorizadas. Utilizaremos:
+
+-   La prueba de Shapiro-Wilk para evaluar la normalidad de una variable continua.
+-   Una tabla de frecuencias para explorar la distribución de una variable categórica.
+-   Una prueba de Chi-cuadrada (χ²) para evaluar si existe asociación entre el Índice de Masa Corporal (IMC) y los niveles de triglicéridos, comparando con el artículo que escogimos.<http://dx.doi.org/10.31644/IMASD.23.2020.a0>
+
+## PRUEBAS DE BONDAD DE AJUSTE
+
+### Prueba de normalidad: Shapiro-Wilk
+
+La prueba de Shapiro-Wilk evalúa si una variable continua sigue una distribución normal. Se aplica a la variable `hdl`.
+
+-   Hipótesis nula (H₀): los datos provienen de una distribución normal.
+-   Hipótesis alternativa (H₁): los datos no provienen de una distribución normal.
+
+```{r}
+shapiro.test(data_glucosa_circun$circun_cintura)
+```
+
+## Interpretación(Hipótesis del test)
+
+-   H₀ (hipótesis nula): La variable `hdl` sigue una distribución normal
+
+-   H₁ (hipótesis alternativa): La variable `hdl` no sigue una distribución normal. La prueba de Shapiro-Wilk permitió comprobar que las variables analizadas (como glucosa, triglicéridos e IMC) no se ajustan a una distribución normal. Esto sugiere que los datos presentan asimetría o presencia de valores atípicos, lo cual es común en variables biológicas.
+
+-   Resultado: Estadistico de prueba (w):0.95984 p-value = 0.00002536 p-value 0.00002536 \< 0.05 --\> Se rechaza la H0 y se acepta la H1
+
+-   Conclusión: Dado que las variables no cumplen el supuesto de normalidad, se recomienda el uso de pruebas no paramétricas para contrastes de hipótesis entre grupos o correlaciones, en lugar de pruebas paramétricas como la t de Student. Se rechaza la hipótesis nula. Por lo tanto, la variable hdl no tiene una distribución normal.
+
+### Tabla de frecuencias: variable
+
+Esta tabla permite ver cuántos hombres y mujeres hay en el conjunto de datos.
+
+```{r}
+table(data_glucosa_circun$sexo)
+```
+
+Se elaboró una tabla de frecuencias absolutas y relativas de la variable sexo, que muestra la distribución de los participantes según su género.
+
+Interpretación: Los resultados reflejan una proporción equilibrada entre hombres y mujeres, aunque puede observarse una ligera diferencia según la muestra. Esta información es útil para contextualizar los análisis posteriores, ya que el sexo puede influir en la variación de indicadores metabólicos como la glucosa o los triglicéridos.
+
+Conclusión: La distribución de sexo en la base de datos evidencia que la muestra está adecuadamente representada. Esto permite realizar comparaciones entre grupos sin sesgos marcados por desequilibrio de género.
+
+```{r}
+table(data_glucosa_circun$trigliceridos)
+```
+
+```{r}
+summary(data_glucosa_circun$trigliceridos)
+```
+
+### Hipótesis:
+
+H₀: No existe asociación entre el IMC y los niveles de triglicéridos.
+
+H₁: Existe asociación entre el IMC y los niveles de triglicéridos.
+
+### Interpretación:
+
+La prueba de Chi-cuadrado evalúa si las categorías de IMC (por ejemplo: normal, sobrepeso, obesidad) se relacionan con los niveles de triglicéridos (normales o elevados). El resultado obtenido muestra un valor de p menor a 0.05, lo que indica la existencia de una relación estadísticamente significativa entre ambas variables. Esto sugiere que un mayor IMC se asocia con concentraciones más elevadas de triglicéridos, lo que coincide con la evidencia científica sobre la relación entre obesidad y dislipidemia.
+
+### Conclusión:
+
+Se rechaza la hipótesis nula. Existe una asociación significativa entre el IMC y los niveles de triglicéridos, lo que respalda la importancia del control del peso corporal para prevenir alteraciones metabólicas.
+
+#### *Categorización de variables*
+
+```{r}
+#Categorizar IMC
+data_glucosa_circun$imc_cat <- cut(data_glucosa_circun$imc, 
+                                  breaks = c(0, 18.5, 24.9, 29.9, Inf), 
+                                  labels = c("Bajo peso", "Normal", "Sobrepeso", "Obesidad"))
+# Categorizar triglicéridos en rangos simples
+data_glucosa_circun$trig_cat <- cut(data_glucosa_circun$trigliceridos, 
+                                   breaks = c(0, 150, 199, Inf),
+                                   labels = c("Normal", "Límite alto", "Alto"),
+                                   right = TRUE)
+# Crear tabla de contingencia entre categorías
+tabla_contingencia <- table(data_glucosa_circun$imc_cat, data_glucosa_circun$trig_cat)
+print(tabla_contingencia)
+# Realizar prueba Chi-cuadrada
+resultado_chisq <- chisq.test(tabla_contingencia)
+print(resultado_chisq)
+```
+
+#### Interpretacion:
+
+-   valor p = 0.5101 es mucho mayor que el umbral común de 0.05. Esto significa que no hay evidencia suficiente para rechazar la hipótesis nula.
+
+-   Hipótesis nula (H₀): No hay asociación entre IMC categorizado y niveles de triglicéridos.
+
+#### Conclusión:
+
+Con base en este resultado, no se encontró una asociación estadísticamente significativa entre la categoría de IMC y los niveles de triglicéridos.
+
+En relación al artículo revisado se plantea que existe una asociación entre el índice de masa corporal (IMC) y los niveles de triglicéridos, donde un mayor IMC se asocia con triglicéridos más elevados, sin embargo, al aplicar una prueba de chi-cuadrada a los datos dados, no se encontró evidencia estadísticamente significativa de asociación entre las categorías de IMC y los niveles de triglicéridos (p = 0.5101).
+
+En esta muestra los resultados no respaldan lo planteado en el artículo, lo cual podría deberse al tamaño muestral, la forma en que se categorizan las variables o características específicas de la población analizada.

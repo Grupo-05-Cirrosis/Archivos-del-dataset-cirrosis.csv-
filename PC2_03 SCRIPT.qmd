@@ -1,0 +1,215 @@
+---
+title: "PC2_03 SEM 10"
+format: html
+editor: visual
+---
+
+# Cargar e instalar paquetes
+
+En esta sección se instalan y cargan los paquetes necesarios para realizar el análisis estadístico, manejo de datos y visualización. Se utiliza principalmente el paquete `tidyverse` para manipulación de datos, `car` para pruebas estadísticas, y `ggplot2` para graficar.
+
+```{r}
+install.packages("car")
+```
+
+Ahora importaremos las librerias las cuales usaremos para nuestro analisis de datos
+
+```{r}
+library(tidyverse)
+library(here)
+library(rio)
+library(gtsummary)
+library(car)
+```
+
+# Cargando los datos
+
+Ahora importamos nuestra data asignada:
+
+```{r}
+cirrosis. <- import(here("data", "cirrosis_2.csv"))
+```
+
+# Sobre los datos para esta práctica
+
+Los datos representan una muestra de 418 pacientes con diagnóstico de cirrosis, con el objetivo de evaluar factores asociados al estado clínico y su evolución.\
+En esta práctica se explorarán relaciones entre variables cuantitativas (como bilirrubina, edad, albúmina) y categóricas (como medicamento o sexo) mediante análisis estadístico.
+
+# 1 Regresión lineal simple
+
+Regresión es una método para evaluar la asociación entre una variable dependiente (tambien llamado desenlace Y) y una o varias variables independientes (predictoras X1, X2,..., Xk). Los modelos de regresión lineal simple (o univariable) utilizan solo solo una variable independiente o predictora X. Ejemplos de preguntas de investigación se puede responder usando un modelo de regresión lineal:
+
+## 1.1 El problema en este ejercicio
+
+La fórmula que usaremos sirve para crear un histograma que muestra los valores de bilirrubina en un grupo de personas cirróticas, y añade una línea vertical que indica el promedio de esta variable para reconocer la cantidad más frecuente y cómo se compara con la media del grupo.
+
+```{r}
+ggplot(cirrosis_2.csv, aes(x = bilirrubina)) +
+  geom_histogram(fill = "pink", color = "brown", bins = 30) +
+  geom_vline(xintercept = mean(cirrosis_2.csv$bilirrubina, na.rm = TRUE),
+             color = "darkgreen", linewidth = 1) +
+  labs(y = "Frecuencia", x = "bilirrubina")
+
+```
+
+En estos datos, el promedio de la bilirrubina es:
+
+```{r}
+mean(cirrosis_2.csv$bilirrubina, na.rm = TRUE)
+```
+
+Una observación importante a partir del histograma y el promedio (el valor esperado) es que existe una gran variación entre los valores de bilirrubina de los individuos de quienes provienen los datos. Podemos hipotetizar de que otras variables (predictores) podrían influir en esta variación, por ejemplo, el medicamento que consumen por la enfermedad.
+
+## 1.2 Notación en el método de regresión lineal simple
+
+```{r}
+plot(bilirrubina ~ edad , data = cirrosis_2.csv,
+     col = "pink",
+     ylab = "bilirrubina",
+     xlab = "edad",
+     las = 1,
+     pch = 20, 
+     font.lab = 2, font.axis = 2) 
+
+# La función lm() ajusta el modelo de regresión lineal
+abline(lm(bilirrubina ~ edad , data = cirrosis_2.csv), lwd = 2, col = "purple")
+```
+
+La ecuación siguiente ecuación describe un modelo de regresión lineal simple para 𝑌 usando un predictor continuo 𝑋.
+
+$$
+Y = \beta_0 + \beta_1 X + \epsilon
+$$
+
+**Interpretacion**:\
+La línea de regresión presenta una pendiente casi horizontal, lo que indica que no existe una relación lineal significativa entre la edad y los niveles de bilirrubina.\
+Es decir, los cambios en la edad no parecen influir de gran manera en los valores de bilirrubina en esta muestra
+
+## 1.3 Ajustando el modelo de regresión lineal simple para nuestro problema
+
+En R, usamos la función lm() para ajustar un modelo de regresión lineal. "lm" es la abreviatura para "linear model". Dentro de la función debemos indicarle como argumentos el desenlace X, el predictor Y y la data donde se encuentran las variables. Esta es la estructura para ajustar el modelo con la función lm: lm(y \~ x, data = mis_datos).
+
+Ajustando el modelo para nuestros datos
+
+```{r}
+modelo_ejemplo_cirrosis = lm(bilirrubina ~ edad, data = cirrosis_2.csv)
+```
+
+Para ver los resultados, usamos la función summary() y dentro, el objeto modelo_ejemplo.
+
+```{r}
+summary(modelo_ejemplo_cirrosis)
+```
+
+**Interpretacion**
+
+El intercepto es 3.18 y la pendiente 0.0007.\
+Esto indica que, por cada año más de edad, la bilirrubina aumentaría en promedio 0.0007 mg/dL, un cambio casi nulo.\
+El modelo solo explica el 0 % de la variabilidad, por lo que la edad no ayuda a predecir los niveles de bilirrubina.
+
+## 1.4 Interpretando los resultados
+
+La sección Coefficients del resultado:
+
+```{r}
+summary(modelo_ejemplo_cirrosis)$coef
+```
+
+La tabla de coeficientes muestra las estimaciones y las pruebas de hipótesis tanto para el intercepto (β₀), etiquetado como *(Intercept)*, como para el coeficiente de la variable Edad, que representa la pendiente (β₁) de la recta de regresión.
+
+En esta sección, la columna *Estimate* indica que el modelo que mejor se ajusta a los datos tiene un intercepto de 3.18 y una pendiente de 0.0007.\
+Esto significa que, según el modelo, una persona con edad igual a 0 tendría un valor promedio de bilirrubina de 3.18 mg/dL, aunque este valor carece de interpretación clínica directa, ya que no existen pacientes con edad cero.\
+La pendiente indica que por cada año adicional de edad, el nivel promedio de bilirrubina aumentaría en 0.0007 mg/dL, lo cual representa un cambio extremadamente pequeño y sin relevancia práctica.
+
+Sin embargo, el valor p de la variable Edad es 0.9719, muy superior al nivel de significancia habitual (0.05).\
+Esto indica que el coeficiente de la edad no es estadísticamente significativo, por lo que no se puede rechazar la hipótesis nula de que la pendiente es igual a cero.\
+En otras palabras, no se evidencia una relación lineal significativa entre la edad y la bilirrubina en esta muestra.
+
+Además, el coeficiente de determinación (R² = 0.00000299) muestra que el modelo no explica prácticamente nada de la variabilidad observada en los niveles de bilirrubina.
+
+## 1.5 ¿Cómo reportar los resultados del ajuste del modelo de regresión lineal simple?
+
+Empleamos un modelo de regresión lineal simple para evaluar la asociación entre la edad (en años) y los niveles de bilirrubina en una muestra de 418 personas.\
+Solo el 0.0003 % de la variación en los niveles de bilirrubina fue explicada por la edad (R² = 0.00000299).\
+No se encontró una asociación estadísticamente significativa entre ambas variables (B = 0.0007; p = 0.9719).\
+En promedio, por cada año adicional de edad, el nivel de bilirrubina aumenta únicamente 0.0007 mg/dL, lo cual representa un cambio mínimo y clínicamente irrelevante.\
+Estos resultados indican que la edad no tiene un efecto importante ni significativo sobre los niveles de bilirrubina en esta muestra.
+
+```{r}
+theme_gtsummary_language("es")
+
+tabla_reporte <- modelo_ejemplo_cirrosis |> 
+  tbl_regression(intercept = T,
+                 estimate_fun = function(x) style_sigfig(x, digits = 4),
+                 pvalue_fun   = function(x) style_pvalue(x, digits = 3),
+                 label        = list( edad~ "edad (años)")) |>
+  modify_caption("Regresión de la variable cirrosis en función a la edad")
+
+tabla_reporte
+```
+
+**Exportamos la tabla**
+
+```{r}
+tabla_reporte |> 
+  as_flex_table()  |> 
+  flextable::save_as_docx(path = "tabla_reporte.docx")
+```
+
+## PRUEBAS DE BONDAD DE AJUSTE
+
+```{r}
+# Prueba de Shapiro-Wilk para normalidad de la bilirrubina
+cirrosis_2.csv |>
+summarise(shapiro = list(shapiro.test(bilirrubina))) |>
+pull(shapiro)
+```
+
+**Interpretación:**
+
+-   El valor p es menor que 0.05 (p \< 2.2e-16)
+
+-   **Conclusión:** Rechazamos la hipótesis nula de normalidad
+
+-   La variable bilibirrubina NO sigue una distribución normal en estos datos
+
+-   El valor W de 0.63197 está muy lejos de 1 (que indicaría normalidad perfecta)
+
+    \
+    Los niveles de bilirrubina encontrados en esta población de pacientes cirróticos, tienen una distribución que se desvía significativamente de la normalidad, lo que significa una distribución asimétrica con probabilidad de cola hacia la derecha (valores altos en algunos pacientes), algo habitual en variables hepáticas.
+
+```{r}
+# Prueba de Shapiro-Wilk para normalidad de la albumina
+cirrosis_2.csv |>
+summarise(shapiro = list(shapiro.test(albumina))) |>
+pull(shapiro)
+```
+
+**Interpretación:**
+
+-   El valor p es menor que 0.05 (p \< 0.0006387)
+
+-   **Conclusión:** Rechazamos la hipótesis nula de normalidad
+
+-   La variable albumina **NO sigue una distribución normal** en estos datos
+
+-   El valor W de 0.98652 no está lejos de 1 pero sigue indicando que la distribución difiere significativamente de la normalidad.
+
+    Los niveles de albúmina muestran una distribución asimétrica, probablemente influida por diferencias marcadas entre pacientes con distintos grados de función hepática.
+
+```{r}
+# Prueba de Shapiro-Wilk para normalidad de la Edad
+cirrosis_2.csv |>
+summarise(shapiro = list(shapiro.test(edad))) |>
+pull(shapiro)
+```
+
+**Interpretación:**
+
+-   El valor p es ligeramente menor que 0.05 (por ejemplo, p = 0.03)
+
+-   **Conclusión:** Rechazamos la hipótesis nula de normalidad
+
+-   La **edad NO sigue estrictamente una distribución normal**, aunque el valor W cercano a 1 indica una desviación leve
+
+    La edad de los pacientes presenta una distribución que se aproxima bastante a la normalidad, pero con una desviación estadísticamente significativa. Esto podría deberse a pequeñas asimetrías en la distribución de edades en la muestra.

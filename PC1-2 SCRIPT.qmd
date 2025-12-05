@@ -1,0 +1,140 @@
+---
+title: "Practica 02 PC 01"
+format: html
+editor: visual
+---
+
+## TRABAJO 02 - LIMPIEZA DE DATA BASE CIRROSIS
+
+INTEGRANTES:
+
+-   Rojas Cortez Nayely
+
+-   Ticse Pecho Katherine
+
+-   Manay Ventura Alexander
+
+-   Pachas Rojas Lizbeth
+
+-   Lozano Laura,Marina
+
+-   Caballero Martinez Arianna
+
+## PRIMEROS PASOS
+
+IMPORTANCIA DE LA LIMPIEZA DE DATOS:
+
+La limpieza de datos en RStudio es **una etapa fundamental y crítica**
+en cualquier proyecto de análisis de datos o ciencia de datos. Su
+importancia no puede ser subestimada, ya que la calidad de los
+resultados depende directamente de la calidad de los datos.
+
+## LOS PAQUETES
+
+```{r}
+#PASO 1 INSTALAR SOLO SI NO ESTA INSTALADOS
+
+install.packages("tidyverse")
+install.packages("rio")
+install.packages("here")
+install.packages("janitor")
+```
+
+```{r}
+#PASO 2 ACTIVAR PAQUETES DE FORMA OBLIGATORIA
+
+library(tidyverse)
+library(rio)
+library(here)
+library(janitor)
+```
+
+## Importar DATA BASE usando el paquete rio
+
+```{r}
+ cirrosis= import(here("data", "cirrosis.csv"))
+```
+
+# OBSERVAR LOS DATOS
+
+```{r}
+str(cirrosis)
+```
+
+## ANTES
+
+## PASO 1: VARIABLES
+
+-   **Nombres de columnas**: Convertidos a minúsculas con guiones bajos (`clean_names()`)
+
+-   **Celdas vacías**: Reemplazadas por `NA` en todas las columnas de texto
+
+-   **Filas/columnas vacías**: Eliminadas completamente del dataset
+
+```{r}
+cirrosis_1 = cirrosis |> 
+  clean_names() |> 
+  mutate_if(is.character, list(~ na_if(., ""))) |> 
+  remove_empty(which = c("rows", "cols"))
+```
+
+## PASO 2: DATOS 
+
+-   **EDAD**: Convertida de días a años (valores enteros)
+
+-   **COLUMNAS BINARIAS**: Estandarizadas a "Sí"/"No" (ascitis, hepatomegalia, aracnoides)
+
+-   **EDEMA**: Categorizado en "Leve"/"Severo"/"No"
+
+-   **DATOS FALTANTES**: Valores como "ausente" convertidos a "No"
+
+-   **CONSISTENCIA**: Minúsculas/mayúsculas uniformizadas en respuestas
+
+```{r}
+library(dplyr)
+
+# Código corregido con nombres en minúsculas
+cirrosis_2 <- cirrosis_1 %>%
+  # 1. Convertir edad de días a años y redondear
+  mutate(edad = round(edad / 365.25)) %>%
+  
+  # 2. Estandarizar "Sí"/"No" en columnas categóricas binarias
+  mutate(across(
+    c(ascitis, hepatomegalia, aracnoides),
+    ~ case_when(
+      tolower(.x) %in% c("sí", "si", "yes", "s", "y") ~ "SI",
+      tolower(.x) %in% c("no", "n") ~ "NO",
+      TRUE ~ as.character(.x)
+    )
+  )) %>%
+  
+  # 3. Estandarizar valores de edema
+  mutate(edema = case_when(
+    tolower(edema) %in% c("leve", "ligero", "moderado") ~ "Leve",
+    tolower(edema) == "severo" ~ "Severo",
+    tolower(edema) == "ausente" ~ "No",
+    TRUE ~ as.character(edema)
+  ))
+
+# Verificar resultados
+glimpse(cirrosis_2)
+summary(cirrosis_2)
+```
+
+# DESPUES
+
+OBERSVAR CAMBIOS
+
+```{r}
+str(cirrosis_2)
+```
+
+## EXPORTANDO DATA BASE
+
+```{r}
+# Exportar como CSV
+write.csv(cirrosis_2, "cirrosis_2.csv", row.names = FALSE, fileEncoding = "UTF-8")
+
+# Mensaje de confirmación
+cat("Base de datos exportada como: cirrosis_2.csv")
+```

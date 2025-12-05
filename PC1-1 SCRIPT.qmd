@@ -1,0 +1,117 @@
+---
+title: "PRACTICA 01 - 2025 - II"
+format: html
+editor: visual
+---
+
+## TRABAJO 1 PC1
+
+INTEGRANTES:
+
+\- Rojas Cortez Nayely
+
+\- Ticse Pecho Katherine
+
+\- ⁠Manay Ventura Alexander
+
+\- ⁠Pachas Rojas Lizbeth
+
+\- ⁠Lozano Laura,Marina
+
+\- ⁠Caballero Martinez Arianna
+
+## Instalacion de Paquetes
+
+#Verificar si los paquetes estan instalados o solo ignorar y pasar al siguiente paso
+
+```{r}
+#PASO 1 paquetes
+install.packages("tidyverse")
+install.packages("rio")
+install.packages("here")
+install.packages("janitor")
+install.packages("stringi")
+install.packages("DataExplorer")
+```
+
+```{r}
+#PASO 2 paquetes
+library(tidyverse)
+library(rio)
+library(here)
+library(janitor)
+library(stringi)  
+library(DataExplorer) 
+```
+
+## Importar cirrosis.csv usando el paquete rio
+
+```{r}
+cirrosis = import(here("data", "cirrosis.csv"))
+```
+
+# RESUMEN DE DATOS DE LAS VARIABLES
+
+```{r}
+str(cirrosis)
+```
+
+# Generar gráficos categóricos
+
+\#**1. Gráfico de barras**
+
+```{r}
+library(tidyverse)
+ggplot(cirrosis, aes(x = Etapa)) +
+  geom_bar(fill = "#2E86C1") +
+  labs(title = "Frecuencia por Etapa", x = "Etapa", y = "Frecuencia")
+```
+
+Se observa un grafico de barras generado con ggplot2
+
+\#**2. Gráfico de pastel**
+
+```{r}
+library(tidyverse)
+
+cirrosis %>%
+  count(Sexo) %>%
+  mutate(porcentaje = n / sum(n) * 100,
+         etiqueta = paste0(Sexo, " (", round(porcentaje, 1), "%)")) %>%
+  ggplot(aes(x = "", y = n, fill = Sexo)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = etiqueta), 
+            position = position_stack(vjust = 0.5), size = 5) +
+  labs(title = "Distribución por Sexo", fill = "Sexo") +
+  theme_void()
+```
+
+Se observa un grafico creado con ggplot2
+
+\#**3. Gráfico de barras apiladas proporcionales**
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Calcular proporciones
+df_prop <- cirrosis %>%
+  group_by(Etapa, Medicamento) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(Etapa) %>%
+  mutate(prop = n / sum(n),
+         etiqueta = scales::percent(prop, accuracy = 0.1))
+
+# Graficar con etiquetas
+ggplot(df_prop, aes(x = Etapa, y = prop, fill = Medicamento)) +
+  geom_col(position = "stack") +
+  geom_text(aes(label = etiqueta), 
+            position = position_stack(vjust = 0.5), size = 4, color = "white") +
+  labs(title = "Proporción de Medicamento por Etapa de Cirrosis",
+       x = "Etapa", y = "Proporción") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+```
+
+Se observa grafico de barras creado con ggplot2
